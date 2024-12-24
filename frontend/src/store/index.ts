@@ -1,5 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit';
-import analyticsReducer from './analyticsSlice';
+import analyticsReducer from './analyticsSlice.ts';
 
 const store = configureStore({
   reducer: {
