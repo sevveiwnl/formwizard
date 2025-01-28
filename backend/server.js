@@ -1,8 +1,11 @@
 // backend/server.js
 
+require('dotenv').config(); // Load environment variables
+
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
+const mongoose = require('mongoose');
 const path = require('path');
 
 const app = express();
@@ -15,7 +18,18 @@ const io = socketIo(server, {
   }
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
+
+// Connect to MongoDB
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+.then(() => console.log('MongoDB connected successfully'))
+.catch(err => {
+  console.error('MongoDB connection error:', err);
+  process.exit(1); // Exit process with failure
+});
 
 // Basic route
 app.get('/', (req, res) => {
