@@ -33,51 +33,19 @@ function Dashboard() {
   const [formList, setFormList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [dataSource, setDataSource] = useState('server'); 
-    // "server" = fetch from Express
-    // "local"  = use window.AnalyticsService if available
 
-  useEffect(() => {
-    // On mount, check if we have a global AnalyticsService
-    // and if dataSource is "local", we might generate sample data
-    if (window.AnalyticsService && dataSource === 'local') {
-      const events = window.AnalyticsService.getEvents();
-      if (events.length === 0) {
-        window.AnalyticsService.generateSampleData(selectedForm);
-      }
-    }
-  }, [dataSource, selectedForm]);
-
-  // Load analytics data from either server or local
+  // Always fetch server data
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
       setError(null);
 
       try {
-        if (dataSource === 'local' && window.AnalyticsService) {
-          // Use localStorage data
-          const analyticsData = window.AnalyticsService.getFormAnalytics(selectedForm);
-          
-          // Gather form IDs from localStorage events
-          const events = window.AnalyticsService.getEvents();
-          const forms = [...new Set(events
-            .filter(e => e.formId)
-            .map(e => e.formId))];
-          
-          setAnalytics(analyticsData);
-          setFormList(forms);
-        } else {
-          // Fetch from server endpoints
-          const analyticsRes = await fetch(`http://localhost:5001/api/analytics/${selectedForm}`);
-          if (!analyticsRes.ok) throw new Error('Failed to fetch analytics');
-          const analyticsData = await analyticsRes.json();
-          
-          // If you had an endpoint for forms, you could fetch it here
-          // For now, just assume there's only one or a few forms:
-          setFormList([selectedForm]);
-          setAnalytics(analyticsData);
-        }
+        const analyticsRes = await fetch(`http://localhost:5001/api/analytics/${selectedForm}`);
+        if (!analyticsRes.ok) throw new Error('Failed to fetch analytics');
+        const analyticsData = await analyticsRes.json();
+        setFormList([selectedForm]);
+        setAnalytics(analyticsData);
       } catch (err) {
         setError(`Failed to load data: ${err.message}`);
         setAnalytics([]);
@@ -87,7 +55,7 @@ function Dashboard() {
     };
 
     loadData();
-  }, [selectedForm, dataSource]);
+  }, [selectedForm]);
 
   if (loading) {
     return (
@@ -108,40 +76,11 @@ function Dashboard() {
     );
   }
 
-  // If no analytics found
   if (!analytics || analytics.length === 0) {
     return (
       <div className="dashboard empty">
         <h1>FormWizard Analytics Dashboard</h1>
-        <div className="data-source-toggle">
-          <label>
-            <input
-              type="radio"
-              value="server"
-              checked={dataSource === 'server'}
-              onChange={() => setDataSource('server')}
-            />
-            Server Data
-          </label>
-          <label>
-            <input
-              type="radio"
-              value="local"
-              checked={dataSource === 'local'}
-              onChange={() => setDataSource('local')}
-            />
-            Local Data
-          </label>
-        </div>
         <p>No data available for this form.</p>
-        {window.AnalyticsService && dataSource === 'local' && (
-          <button onClick={() => {
-            window.AnalyticsService.generateSampleData(selectedForm);
-            window.location.reload();
-          }}>
-            Generate Sample Data
-          </button>
-        )}
       </div>
     );
   }
@@ -162,9 +101,6 @@ function Dashboard() {
   // Prepare data for a bar chart: total interactions vs. total abandonments
   const totalInteractions = analytics.reduce((acc, f) => acc + (f.metrics?.totalInteractions || 0), 0);
   const totalAbandonments = analytics.reduce((acc, f) => {
-    // If you track a separate "abandonmentCount", you could use that.
-    // Or compute from "abandonmentRate" * "focusEvents" if needed.
-    // For simplicity, let's sum up all 'fieldFocus' that never lead to submit:
     return acc + (f.metrics?.abandonmentCount || 0);
   }, 0);
 
@@ -181,7 +117,6 @@ function Dashboard() {
     ]
   };
 
-  // Identify problematic fields (optional)
   const problematicFields = analytics.filter(f => 
     (f.metrics?.abandonmentRate > 30) || (f.metrics?.avgHesitation > 5000)
   );
@@ -189,30 +124,6 @@ function Dashboard() {
   return (
     <div className="dashboard">
       <h1>FormWizard Analytics Dashboard</h1>
-
-      {/* Data source toggle */}
-      <div className="data-source-toggle">
-        <label>
-          <input
-            type="radio"
-            value="server"
-            checked={dataSource === 'server'}
-            onChange={() => setDataSource('server')}
-          />
-          Server Data
-        </label>
-        <label>
-          <input
-            type="radio"
-            value="local"
-            checked={dataSource === 'local'}
-            onChange={() => setDataSource('local')}
-          />
-          Local Data
-        </label>
-      </div>
-
-      {/* Form selector (if you have multiple forms) */}
       {formList.length > 1 && (
         <div>
           <label>Select Form:</label>
@@ -221,8 +132,6 @@ function Dashboard() {
           </select>
         </div>
       )}
-
-      {/* Charts */}
       <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: '300px' }}>
           <h3>Average Hesitation by Field</h3>
@@ -230,7 +139,6 @@ function Dashboard() {
             <Line data={lineData} options={{ responsive: true, maintainAspectRatio: false }} />
           </div>
         </div>
-
         <div style={{ flex: 1, minWidth: '300px' }}>
           <h3>Overall Form Interactions</h3>
           <div style={{ height: '300px' }}>
@@ -238,8 +146,6 @@ function Dashboard() {
           </div>
         </div>
       </div>
-
-      {/* Problematic Fields Table */}
       <div style={{ marginTop: '2rem' }}>
         <h3>Problematic Fields</h3>
         {problematicFields.length > 0 ? (
@@ -270,3 +176,4 @@ function Dashboard() {
 }
 
 export default Dashboard;
+
