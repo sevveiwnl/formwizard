@@ -1,6 +1,12 @@
-/**
- * src/components/Dashboard.js
+/*
+ * Dashboard.jsx
+ * 
+ * Main analytics dashboard that shows:
+ * - How long users spend on each field
+ * - Total form interactions vs abandonments
+ * - Fields that users struggle with
  */
+
 import React, { useState, useEffect } from 'react';
 import {
   Chart as ChartJS,
@@ -15,7 +21,7 @@ import {
 } from 'chart.js';
 import { Line, Bar } from 'react-chartjs-2';
 
-// Register Chart.js components
+// Set up our charts
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -29,12 +35,12 @@ ChartJS.register(
 
 function Dashboard() {
   const [analytics, setAnalytics] = useState([]);
-  const [selectedForm, setSelectedForm] = useState('testForm'); 
+  const [selectedForm, setSelectedForm] = useState('testForm');
   const [formList, setFormList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Always fetch server data
+  // Load data when the selected form changes
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
@@ -57,6 +63,7 @@ function Dashboard() {
     loadData();
   }, [selectedForm]);
 
+  // Show loading state
   if (loading) {
     return (
       <div className="dashboard loading">
@@ -66,6 +73,7 @@ function Dashboard() {
     );
   }
 
+  // Show error state
   if (error) {
     return (
       <div className="dashboard error">
@@ -76,6 +84,7 @@ function Dashboard() {
     );
   }
 
+  // Show empty state
   if (!analytics || analytics.length === 0) {
     return (
       <div className="dashboard empty">
@@ -85,7 +94,7 @@ function Dashboard() {
     );
   }
 
-  // Prepare data for a line chart of average hesitation
+  // Data for the hesitation time chart
   const lineData = {
     labels: analytics.map(a => a.fieldId),
     datasets: [
@@ -98,7 +107,7 @@ function Dashboard() {
     ]
   };
 
-  // Prepare data for a bar chart: total interactions vs. total abandonments
+  // Data for the interactions chart
   const totalInteractions = analytics.reduce((acc, f) => acc + (f.metrics?.totalInteractions || 0), 0);
   const totalAbandonments = analytics.reduce((acc, f) => {
     return acc + (f.metrics?.abandonmentCount || 0);
@@ -117,6 +126,7 @@ function Dashboard() {
     ]
   };
 
+  // Find fields that users struggle with
   const problematicFields = analytics.filter(f => 
     (f.metrics?.abandonmentRate > 30) || (f.metrics?.avgHesitation > 5000)
   );
@@ -124,6 +134,8 @@ function Dashboard() {
   return (
     <div className="dashboard">
       <h1>FormWizard Analytics Dashboard</h1>
+      
+      {/* Form selector */}
       {formList.length > 1 && (
         <div>
           <label>Select Form:</label>
@@ -132,6 +144,8 @@ function Dashboard() {
           </select>
         </div>
       )}
+
+      {/* Charts */}
       <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: '300px' }}>
           <h3>Average Hesitation by Field</h3>
@@ -146,6 +160,8 @@ function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Problem fields */}
       <div style={{ marginTop: '2rem' }}>
         <h3>Problematic Fields</h3>
         {problematicFields.length > 0 ? (

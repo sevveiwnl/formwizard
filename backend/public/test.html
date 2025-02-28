@@ -1,0 +1,42 @@
+<!-- backend/public/test.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>FormWizard Demo</title>
+  <style>
+    /* Minimal styling for the demo form */
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>FormWizard Demo Form</h1>
+  <form id="testForm">
+    <label>
+      Username:
+      <input type="text" name="username" />
+    </label>
+    <br/><br/>
+    <label>
+      Email:
+      <input type="email" name="email" />
+    </label>
+    <br/><br/>
+    <label>
+      Password:
+      <input type="password" name="password" />
+    </label>
+    <br/><br/>
+    <button type="submit">Submit</button>
+  </form>
+
+  <p><a href="http://localhost:3000">View Dashboard</a></p>
+
+  <!-- Analytics service & tracker scripts -->
+  <script src="analytics-service.js"></script>
+  <script src="formwizard-tracker.js"></script>
+</body>
+</html>
